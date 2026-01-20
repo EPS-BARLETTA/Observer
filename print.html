@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>EPS Observer – Bilan imprimable</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Cantarell,Noto Sans,sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: #ffffff;
+      color: #111827;
+    }
+    .page{
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1,h2,h3{
+      margin: 0 0 8px;
+      text-align: center;
+    }
+    .meta{
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .muted{
+      color:#6b7280;
+    }
+    .block{
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+    table{
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+    th,td{
+      border: 1px solid #000;
+      padding: 4px;
+      vertical-align: top;
+    }
+    th{
+      background: #f3f4f6;
+    }
+    .note-global{
+      font-style: italic;
+      margin-top: 4px;
+    }
+    .small{
+      font-size: 11px;
+      color: #4b5563;
+      margin-top: 12px;
+      text-align: center;
+    }
+    .qr-box{
+      border: 1px dashed #d1d5db;
+      border-radius: 12px;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      margin-top: 8px;
+    }
+    @media print{
+      body{ padding: 8px; }
+      .no-print{ display: none !important; }
+      .page{ box-shadow: none; border: 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div id="printRoot">
+    <p>Chargement du bilan…</p>
+  </div>
+  <p class="small no-print">
+    Après impression / export PDF, utilisez le partage iPad pour envoyer ce document par AirDrop à votre professeur.
+  </p>
+</div>
+
+<script src="./qrcode.min.js"></script>
+<script src="./scanprof-export.js"></script>
+<script>
+  const STORAGE_KEY = "eps_observer_v5_state";
+
+  function renderPrint(){
+    const root = document.getElementById("printRoot");
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw){
+      root.innerHTML = "<p>Aucune donnée trouvée. Retournez sur l’application et générez un bilan.</p>";
+      return;
+    }
+    let state;
+    try{
+      state = JSON.parse(raw);
+    }catch(e){
+      root.innerHTML = "<p>Impossible de lire les données locales.</p>";
+      return;
+    }
+    const session = state.session;
+    if(!session){
+      root.innerHTML = "<p>Aucune session active trouvée.</p>";
+      return;
+    }
+
+    let html = "";
+    html += "<h1>EPS OBSERVER</h1>";
+    html += "<h2>Dossier d’observation – " + escapeHtml(session.selfName || "") + "</h2>";
+
+    html += '<div class="meta">';
+    const modeLabel = session.mode === "observer" ? "Je suis observateur" : "Je suis observé";
+    html += "<p><strong>Mode :</strong> " + escapeHtml(modeLabel) + "</p>";
+    html += "<p><strong>APSA :</strong> " + escapeHtml(session.apsa || "") +
+            " — Niveau " + (session.level || "") + "</p>";
+    const d = new Date(session.dateIso || Date.now());
+    html += "<p><strong>Date :</strong> " + d.toLocaleString() + "</p>";
+    html += "</div>";
+
+    (session.targets || []).forEach(target=>{
+      html += '<div class="block">';
+      const title = session.mode === "observer"
+        ? "J’ai observé : " + (target.name || "")
+        : "J’ai été observé par : " + (target.name || "");
+      html += "<h3>" + escapeHtml(title) + "</h3>";
+
+      html += "<table><thead><tr>";
+      html += "<th>Observable</th><th>Niveau (1–4)</th><th>Compteur (+)</th><th>Commentaire</th>";
+      html += "</tr></thead><tbody>";
+
+      (target.items || []).forEach(item=>{
+        const useLevels = (typeof item.useLevels === "boolean") ? item.useLevels : true;
+        const usePlusMinus = (typeof item.usePlusMinus === "boolean") ? item.usePlusMinus : true;
+        const useComment = (typeof item.useComment === "boolean") ? item.useComment : true;
+
+        html += "<tr>";
+        html += "<td>" + escapeHtml(item.text || "") + "</td>";
+        html += "<td>" + (useLevels && typeof item.level === "number" ? item.level : "") + "</td>";
+        html += "<td>" + (usePlusMinus ? (item.plus || 0) : "") + "</td>";
+        html += "<td>" + (useComment ? escapeHtml(item.note || "") : "") + "</td>";
+        html += "</tr>";
+      });
+
+      html += "</tbody></table>";
+
+      if(target.comment){
+        html += '<div class="note-global">Commentaire global : ' +
+                escapeHtml(target.comment) + "</div>";
+      }
+
+      html += "</div>";
+    });
+
+    html += '<div class="block">';
+    html += '<h3>Transfert vers ScanProf</h3>';
+    html += '<p class="muted">Scannez le QR code ci-dessous avec ScanProf → Scanner pour importer la séance.</p>';
+    html += '<div id="printScanProfQr" class="qr-box"><span class="muted">Préparation du QR…</span></div>';
+    html += '<p class="small" id="printScanProfInfo"></p>';
+    html += '</div>';
+
+    root.innerHTML = html;
+    renderPrintScanProfQr(session);
+
+    setTimeout(()=>{
+      window.print();
+    }, 500);
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+  }
+
+  function renderPrintScanProfQr(session){
+    const qrEl = document.getElementById("printScanProfQr");
+    const infoEl = document.getElementById("printScanProfInfo");
+    if (!qrEl || !infoEl) return;
+
+    if (typeof QRCode === "undefined" || !window.ScanProfExport) {
+      infoEl.textContent = "Librairie QR non disponible.";
+      return;
+    }
+
+    const { entries, json, byteLength } = window.ScanProfExport.buildPayload(session);
+    if (!entries.length || !json) {
+      infoEl.textContent = "Aucune donnée à exporter.";
+      qrEl.innerHTML = "";
+      return;
+    }
+
+    const limit = window.ScanProfExport.MAX_QR_BYTES || 2800;
+    if (byteLength > limit) {
+      infoEl.textContent = `QR indisponible : ${byteLength} octets (limite ${limit}).`;
+      qrEl.innerHTML = "";
+      return;
+    }
+
+    qrEl.innerHTML = "";
+    new QRCode(qrEl, {
+      text: json,
+      width: 200,
+      height: 200,
+      colorDark: "#0f172a",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    const plural = entries.length > 1 ? "s" : "";
+    infoEl.textContent = `QR prêt (${entries.length} fiche${plural} • ${byteLength} octets).`;
+  }
+
+  renderPrint();
+</script>
+</body>
+</html>

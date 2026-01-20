@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <title>EPS Observer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- PAGE 1 : COVER -->
+  <section id="page-cover" class="page visible">
+    <div class="hero">
+      <h1>EPS Observer</h1>
+      <p>Observations — APSA — CA — Niveaux</p>
+      <button id="btnStart" class="btn btn-green big-main">Commencer</button>
+    </div>
+  </section>
+
+  <!-- PAGE 2 : ACTIVITÉ -->
+  <section id="page-activity" class="page">
+    <h2>Choisir l'activité</h2>
+
+    <div class="bloc">
+      <h3>Niveau</h3>
+      <div id="levelButtons"></div>
+    </div>
+
+    <div class="bloc">
+      <h3>Champ d’apprentissage (CA1 → CA5)</h3>
+      <div id="champList"></div>
+    </div>
+
+    <div class="bloc">
+      <h3>APSA</h3>
+      <div id="apsaList"></div>
+      <div class="row">
+        <input id="addApsaInput" placeholder="Ajouter une APSA">
+        <button id="addApsaBtn" class="btn btn-blue">Ajouter</button>
+      </div>
+    </div>
+
+    <div class="row nav-row">
+      <button id="btnBackToCover" class="btn btn-amber">⬅ Accueil</button>
+      <button id="btnToObservables" class="btn btn-green">Configurer les observables</button>
+    </div>
+  </section>
+
+  <!-- PAGE 3 : OBSERVABLES -->
+  <section id="page-observables" class="page">
+    <h2>Observables</h2>
+    <p id="obsApsaLabel" class="muted"></p>
+
+    <div class="bloc bloc-light">
+      <h3>Réglages rapides (tous les observables)</h3>
+      <div class="obs-global-options">
+        <label><input type="checkbox" id="globalUseComment" checked> Commentaire</label>
+        <label><input type="checkbox" id="globalUsePlusMinus" checked> + / -</label>
+        <label><input type="checkbox" id="globalUseLevels" checked> Niveaux 1–4</label>
+        <button id="btnApplyGlobalOptions" class="btn btn-blue small">Appliquer à tous</button>
+      </div>
+    </div>
+
+    <div id="observableList"></div>
+
+    <div class="bloc">
+      <div class="row">
+        <input id="addObservableInput" placeholder="Ajouter un observable">
+        <button id="addObservableBtn" class="btn btn-blue">Ajouter</button>
+      </div>
+    </div>
+
+    <div class="row nav-row">
+      <button id="btnBackToActivity" class="btn btn-amber">⬅ Activité</button>
+      <button id="btnToRole" class="btn btn-green big-main">Démarrer l’observation</button>
+    </div>
+  </section>
+
+  <!-- PAGE 4 : CHOIX DU RÔLE -->
+  <section id="page-role" class="page">
+    <h2 class="centered">Quel est votre rôle aujourd’hui ?</h2>
+
+    <div class="role-buttons">
+      <button id="roleObserver" class="btn btn-blue btn-role">🟢 Je suis observateur</button>
+      <button id="roleObserved" class="btn btn-amber btn-role">🔵 Je suis observé</button>
+    </div>
+
+    <div id="roleForm" class="hidden">
+      <h3 id="roleTitle" class="centered"></h3>
+
+      <div class="bloc bloc-green">
+        <label>Mon prénom :</label>
+        <input id="roleSelfInput" type="text" placeholder="Votre prénom">
+      </div>
+
+      <div class="bloc bloc-amber">
+        <label id="roleTargetLabel"></label>
+        <div id="roleTargetList" class="chips"></div>
+        <input id="roleTargetInput" placeholder="Ajouter un nom">
+      </div>
+
+      <div class="row nav-row">
+        <button id="btnBackToObservables" class="btn btn-amber">⬅ Observables</button>
+        <button id="btnStartSession" class="btn btn-green big-main">Commencer la session</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 5 : OBSERVATION -->
+  <section id="page-observation" class="page">
+    <h2 id="sessionHeader"></h2>
+
+    <div class="bloc">
+      <button id="btnAddTarget" class="btn btn-blue">+ Ajouter une personne</button>
+    </div>
+
+    <div id="targetTabs"></div>
+    <div id="observationArea"></div>
+
+    <div class="row nav-row">
+      <button id="btnToBilan" class="btn btn-green">📄 Voir le bilan</button>
+    </div>
+  </section>
+
+  <!-- PAGE 6 : BILAN -->
+  <section id="page-bilan" class="page">
+    <h2>Bilan et PDF</h2>
+
+    <div id="bilanContent"></div>
+
+    <div class="row nav-row">
+      <button id="btnExportPDF" class="btn btn-green-dark">📄 Exporter le PDF</button>
+      <button id="btnBackToSession" class="btn btn-blue">Retour à la session</button>
+      <button id="btnResetAll" class="btn btn-red">Réinitialiser tout</button>
+    </div>
+  </section>
+
+</div>
+
+<script src="./qrcode.min.js"></script>
+<script src="./scanprof-export.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
